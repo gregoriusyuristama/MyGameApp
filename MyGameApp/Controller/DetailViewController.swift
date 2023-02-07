@@ -28,7 +28,6 @@ class DetailViewController: UIViewController {
     }()
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
         if let result = game {
             gameTitle.text = result.title
             gameImage.image = result.imageDownload
@@ -37,13 +36,28 @@ class DetailViewController: UIViewController {
     }
     override func viewWillAppear(_ animated: Bool) {
         isGameFavorited()
-            Task {
-                indicatorLoading.isHidden = false
-                indicatorLoading.startAnimating()
-                gameDesc.text =  await Util.getDetails(gameId: String(gameId!))
-                indicatorLoading.stopAnimating()
-                indicatorLoading.isHidden = true
+            indicatorLoading.isHidden = false
+            indicatorLoading.startAnimating()
+        loadGame(gameId: gameId!) { (result) in
+            switch result {
+            case .success(let game):
+                self.gameDesc.text = game.description?.htmlToString
+                self.indicatorLoading.stopAnimating()
+                self.indicatorLoading.isHidden = true
+            case .failure(let error):
+                    print("Error on: \(error.localizedDescription)")
             }
+        }
+    }
+    func loadGame(gameId: Int32, completion: @escaping (Result<GameResponse, GameError>) -> Void) {
+        NetworkService().getGameDetailsAF(gameId: gameId) { (result) in
+            switch result {
+            case .success(let game):
+                completion(.success(game))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
     @objc private func onButtonFavClicked() {
         if isFavorite {

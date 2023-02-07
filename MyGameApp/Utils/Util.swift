@@ -22,22 +22,38 @@ class Util {
         pendingOperation.downloadInProgress[indexPath] = downloader
         pendingOperation.downloadQueue.addOperation(downloader)
     }
-
-    static func getGames() async -> [Game] {
-        let network = NetworkService()
-        do {
-            return try await network.getGames()
-        } catch {
-            fatalError("Connecction Failed")
+    static func getGamesAF(completion: @escaping (Result<[Game], GameError>) -> Void) {
+        NetworkService().getGamesAF { (result) in
+          switch result {
+          case .success(let response):
+              completion(.success(gamesMapperUtil(input: response.games)))
+          case .failure(let error):
+              completion(.failure(error))
+          }
         }
     }
-    static func getDetails(gameId: String) async -> String {
-        let network = NetworkService()
-        do {
-            let gameDescription = try await network.getGameDetails(gameId: gameId)
-            return gameDescription.htmlToString
-        } catch {
-            fatalError("Connection Failed")
+    static func getDetailsAF(gameId: Int32, completion: @escaping (Result<String, GameError>) -> Void) {
+        NetworkService().getGameDetailsAF(gameId: gameId) { (result) in
+          switch result {
+          case .success(let response):
+              completion(.success(response.description ?? ""))
+          case .failure(let error):
+              completion(.failure(error))
+          }
         }
+    }
+    static fileprivate func gamesMapperUtil(
+      input gameResponses: [GameResponse]
+    ) -> [Game] {
+      return gameResponses.map { result in
+        return Game(
+          title: result.title,
+          image: result.backgroundImage,
+          id: Int32(result.id),
+          rank: result.rank,
+          release: result.releaseDate,
+          description: ""
+        )
+      }
     }
 }

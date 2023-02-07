@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Alamofire
 
 class ViewController: UIViewController {
     private let pendingOperations = PendingOperations()
@@ -14,6 +15,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+
         gameTableView.dataSource = self
         gameTableView.delegate = self
         gameTableView.register(UINib(nibName: "GameTableViewCell", bundle: nil), forCellReuseIdentifier: "gameTableViewCell")
@@ -21,8 +23,18 @@ class ViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         Task {
-            games = await Util.getGames()
-            gameTableView.reloadData()
+//            games = await Util.getGames()
+//            gameTableView.reloadData()
+            Util.getGamesAF { [weak self] (result) in
+                switch result {
+                case .success(let data):
+                        self?.games = data
+                        self?.gameTableView.reloadData()
+                        self?.gameTableView.isHidden = false
+                case .failure(let error):
+                        print("Error on: \(error.localizedDescription)")
+                }
+            }
         }
     }
 

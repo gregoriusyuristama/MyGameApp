@@ -19,6 +19,7 @@ class Game {
     let release: Date
     var imageDownload: UIImage?
     var state: DownloadState = .new
+    let description: String
     init(
         title: String,
         image: URL,
@@ -32,6 +33,7 @@ class Game {
         self.id = id
         self.rank = rank
         self.release = release
+        self.description = description
   }
 }
 
@@ -52,12 +54,14 @@ struct GameResponse: Codable {
     let backgroundImage: URL
     let rank: Double
     let releaseDate: Date
+    let description: String?
     enum CodingKeys: String, CodingKey {
         case id
         case title = "name"
         case backgroundImage = "background_image"
         case rank = "rating"
         case releaseDate = "released"
+        case description
     }
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -65,22 +69,10 @@ struct GameResponse: Codable {
         title = try container.decode(String.self, forKey: .title)
         backgroundImage = try container.decode(URL.self, forKey: .backgroundImage)
         rank = try container.decode(Double.self, forKey: .rank)
-        // MARK: Menentukan tanggal rilis.
         let dateString = try container.decode(String.self, forKey: .releaseDate)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         releaseDate = dateFormatter.date(from: dateString)!
-    }
-}
-
-struct GameDetail: Codable {
-    let desc: String
-    enum CodingKeys: String, CodingKey {
-        case desc = "description"
-    }
-    init(
-    desc: String
-    ) {
-        self.desc = desc
-    }
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+  }
 }
